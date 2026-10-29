@@ -133,6 +133,20 @@ test("z.toJSONSchema() returns StandardJSONSchemaV1", async () => {
 	`);
 });
 
+test("~standard.jsonSchema throws for an unsupported target", () => {
+  const schema = z.object({ title: z.string() });
+  const { jsonSchema } = schema["~standard"];
+  expect(() => jsonSchema.input({ target: "draft-03" })).toThrow('JSON Schema target "draft-03" is not supported');
+  expect(() => jsonSchema.output({ target: "openapi-3.1" })).toThrow(
+    'JSON Schema target "openapi-3.1" is not supported'
+  );
+  expect(() => z.toJSONSchema(schema)["~standard"].jsonSchema.input({ target: "draft-03" })).toThrow();
+  expect(jsonSchema.input({ target: "draft-7" }).$schema).toBe("http://json-schema.org/draft-07/schema#");
+  expect(jsonSchema.input({ target: "openapi-3.0" })).not.toHaveProperty("$schema");
+  // `z.toJSONSchema()` keeps accepting arbitrary targets
+  expect(z.toJSONSchema(schema, { target: "draft-03" })).not.toHaveProperty("$schema");
+});
+
 test("a failing validate reports the same issues as safeParse, without a ZodError", async () => {
   const schema = z.object({ name: z.string().min(3), age: z.number().refine(async (n) => n > 0) });
   const input = { name: "ab", age: -1 };

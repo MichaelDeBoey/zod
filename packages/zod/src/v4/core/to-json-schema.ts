@@ -851,6 +851,10 @@ export const createStandardJSONSchemaMethod =
   (params?: StandardJSONSchemaMethodParams): JSONSchema.BaseSchema => {
     const { libraryOptions, target } = params ?? {};
     const ctx = initializeContext({ ...(libraryOptions ?? {}), target, io, processors });
+    // Standard JSON Schema asks for a throw where `toJSONSchema()` lets an unknown target through
+    if (!["draft-2020-12", "draft-07", "draft-04", "openapi-3.0"].includes(ctx.target)) {
+      throw new Error(`JSON Schema target "${target}" is not supported`);
+    }
     processSchema(schema, ctx);
     extractDefs(ctx, schema);
     return finalize(ctx, schema);
